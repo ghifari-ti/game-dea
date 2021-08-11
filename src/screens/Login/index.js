@@ -1,5 +1,6 @@
 import React from 'react';
 import {
+	Alert,
 	Image,
 	SafeAreaView,
 	StyleSheet,
@@ -10,10 +11,48 @@ import {
 import {BackGroundLogin, Congrats} from '../../assets';
 import tailwind from 'tailwind-rn';
 import {ButtonForm, InputForm} from '../../components';
+import { useState } from 'react';
+import axios from 'axios';
+import queryString from 'query-string';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const index = ({navigation}) => {
+	const [fields, setFields] = useState({
+		'email': '',
+		'password': '',
+	})
+
+	useState( async()=>{
+		var token = await AsyncStorage.getItem('token');
+		if(token)
+		{
+			navigation.navigate('Home');
+		}
+		return;
+	}, [])
+
+	const onSubmit = () => {
+		axios.post('https://dea.himti.my.id/api/login',
+		queryString.stringify(fields), {
+			headers: {
+				"Content-Type": "application/x-www-form-urlencoded"
+			}
+		}).then( async (res) => {
+			console.log(res.data);
+			await AsyncStorage.setItem('token', res.data.token);
+			navigation.navigate('Home');
+		}).catch((err)=>{
+			console.log(err.response.data)
+			Alert.alert("Error!", err.response.data.description, [
+				{
+					text: 'OK'
+				}
+			])
+		})
+	}
+
 	const SubmitLogin = () => {
-		navigation.navigate('Home');
+		//navigation.navigate('Home');
 	};
 	return (
 		<SafeAreaView style={tailwind('h-full')}>
@@ -28,13 +67,14 @@ const index = ({navigation}) => {
                     <Image source={Congrats}></Image>
                 </View> */}
 				<View style={tailwind('w-2/3 mb-3')}>
-					<InputForm placeholder={'Email'} />
+					<InputForm placeholder={'Email'} value={fields.email} 
+					onChangeText={text => setFields({...fields, 'email': text})}/>
 				</View>
 				<View style={tailwind('w-2/3 mb-3')}>
-					<InputForm placeholder={'Password'} />
+					<InputForm placeholder={'Password'} isSecure={true} value={fields.password} onChangeText={text => setFields({...fields, 'password': text})}/>
 				</View>
 				<View style={tailwind('w-2/3 mb-3')}>
-					<ButtonForm actionButton={SubmitLogin} text={'Sign In'} />
+					<ButtonForm actionButton={onSubmit} text={'Sign In'} />
 				</View>
 				<View style={tailwind('w-2/3 mb-10 flex-row items-center')}>
 					<View>

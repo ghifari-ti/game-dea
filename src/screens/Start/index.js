@@ -11,17 +11,54 @@ import {
 import tailwind from 'tailwind-rn';
 import {BackGroundLogin} from '../../assets';
 import {ButtonForm} from '../../components';
+import SoundPlayer from 'react-native-sound-player';
+import { useState } from 'react';
+import { useEffect } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // const soundIcon = <FontAwesome5 color={'#0A35DB'} size={20} name={'volume-up'} />;
 // const soundOffIcon = <FontAwesome5 color={'#0A35DB'} size={20} name={'volume-off'} />;
 
 const index = ({navigation}) => {
+	const [play, setPlay] = useState(true);
+
+	useEffect( async()=>{
+		var test = await AsyncStorage.getItem('music')
+		console.log(test)
+		setPlay(JSON.parse(test));
+		return;
+	}, [])
+
+	useEffect( async()=>{
+		await AsyncStorage.setItem('music', JSON.stringify(play));
+	}, [play])
+
+	const pauseMusic = async () =>
+	{
+		if(!play)
+		{
+			SoundPlayer.resume();
+		} else {
+			SoundPlayer.pause();
+		}
+		setPlay(!play)
+	}
+
 	const goToHome = () => {
-		navigation.navigate('Home');
+		// navigation.navigate('Home');
+		navigation.goBack();
 	};
 
-	const goToQuiz = () => {
-		navigation.navigate('Quiz');
+	
+	
+
+	const goToQuiz = (level) => {
+		navigation.navigate('Quiz', {
+			screen: 'Quiz',
+			params: {
+				level: level
+			}
+		});
 	};
 	return (
 		<SafeAreaView style={tailwind('h-full')}>
@@ -30,11 +67,14 @@ const index = ({navigation}) => {
 			</View>
 			<View style={tailwind('px-6 py-4 w-full flex-row justify-between')}>
 				<TouchableOpacity onPress={goToHome}>
-					<Text style={tailwind('text-white')}>Back</Text>
+					<Image source={require('../../assets/images/back_button.png')} style={{width: 35, height: 35, resizeMode: 'cover'}}/>
+					{/* <Text style={tailwind('text-white')}>Back</Text> */}
 				</TouchableOpacity>
-				<Text style={tailwind('text-white')}>Logo</Text>
-				<TouchableOpacity>
-					<Text style={tailwind('text-white')}>Icon Sounds</Text>
+				<Image source={require('../../assets/images/logo.png')} style={{width: 80, height: 72, resizeMode: 'cover'}}/>
+				{/* <Text style={tailwind('text-white')}>Logo</Text> */}
+				<TouchableOpacity onPress={() => pauseMusic()}>
+					<Image source={require('../../assets/images/sound_btn_white.png')} style={{width: 44, height: 34, resizeMode: 'cover'}}/>
+					{/* <Text style={tailwind('text-white')}>Icon Sounds</Text> */}
 				</TouchableOpacity>
 			</View>
 			<View style={tailwind('w-full my-5 flex-row justify-center')}>
@@ -44,7 +84,7 @@ const index = ({navigation}) => {
 			</View>
 			<View style={tailwind('flex-row justify-center')}>
 				<View style={tailwind('w-1/2')}>
-					<TouchableOpacity onPress={goToQuiz} style={tailwind('px-5 mb-3')}>
+					<TouchableOpacity onPress={() => goToQuiz(1)} style={tailwind('px-5 mb-3')}>
 						<View
 							style={tailwind(
 								'w-full rounded mt-1 px-2 py-6 bg-white items-center',

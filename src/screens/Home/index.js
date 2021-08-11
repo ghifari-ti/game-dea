@@ -11,7 +11,10 @@ import {BackGroundLogin, Congrats} from '../../assets';
 import tailwind from 'tailwind-rn';
 import {ButtonForm, InputForm} from '../../components';
 
+
 const index = ({navigation}) => {
+	
+
 	const goToTutorial = () => {
 		navigation.navigate('Tutorial');
 	};
