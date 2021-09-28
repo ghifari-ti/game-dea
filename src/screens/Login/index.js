@@ -40,6 +40,7 @@ const index = ({navigation}) => {
 		}).then( async (res) => {
 			console.log(res.data);
 			await AsyncStorage.setItem('token', res.data.token);
+			await AsyncStorage.setItem('user_id', JSON.stringify(res.data.user_id));
 			navigation.navigate('Home');
 		}).catch((err)=>{
 			console.log(err.response.data)
@@ -66,6 +67,7 @@ const index = ({navigation}) => {
 				{/* <View style={tailwind('flex-1')}>
                     <Image source={Congrats}></Image>
                 </View> */}
+				<Image source={require('../../assets/images/logo.png')} style={{height: 120, width: 130, marginBottom: 35}}/>
 				<View style={tailwind('w-2/3 mb-3')}>
 					<InputForm placeholder={'Email'} value={fields.email} 
 					onChangeText={text => setFields({...fields, 'email': text})}/>

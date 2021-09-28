@@ -21,6 +21,7 @@ import RenderHTML from 'react-native-render-html';
 import BottomSheetComponent from './bottomsheet';
 import { useCallback } from 'react';
 import { useRef } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // const soundIcon = <FontAwesome5 color={'#0A35DB'} size={20} name={'volume-up'} />;
 // const soundOffIcon = <FontAwesome5 color={'#0A35DB'} size={20} name={'volume-off'} />;
@@ -35,20 +36,28 @@ const BoxSoal = ({width, soal})=>{
 }
 
 const index = ({route, navigation}) => {
+	const [userid, setUserid] = useState(0);
+	const [isTrue,setIsTrue] = useState(false)
 	const [nomor,setNomor] = useState(0)
 	const [listjawab, setListjawab] = useState({})
 	const [soal,setSoal] = useState([{
-		list_jawaban : "{\"A\": \"hi\", \"B\": \"ww\", \"C\": \"cc\", \"D\": \"gg\"}"
+		list_jawaban : "{\"A\": \"loading..\", \"B\": \"loading..\", \"C\": \"loading..\", \"D\": \"loading..\"}"
 	}]);
+	const [jawaban, setJawaban] = useState([])
+	const [totalSoal, setTotalSoal] = useState(0);
 	const {width} = useWindowDimensions();
 	const bottomSheetRef = useRef(null);
 	const handleSheetChanges = useCallback((index) => {
         console.log('handleSheetChanges', index);
     }, []);
-
-
+	var status = route.params.status
+	var level = route.params.level
 
 	useEffect(async()=>{
+		var user_id = JSON.parse(await AsyncStorage.getItem('user_id'));
+		console.log(status)
+		setUserid(user_id);
+		console.log(user_id);
 		var level = { 'level': route.params.level};
 		try {
 			var res = await axios.post('https://dea.himti.my.id/api/getsoal',
@@ -65,17 +74,16 @@ const index = ({route, navigation}) => {
 		} catch(e){
 			console.log(e)
 		}
-		
-			
 		return
 	},[])
 
 	useEffect(()=>{
 		var test = JSON.parse(soal[nomor].list_jawaban);
-		setListjawab(test)
-		console.log(listjawab)
+			setListjawab(test)
+		var totals = Object.keys(soal).length
+		setTotalSoal(totals)
 		return;
-	},[nomor])
+	},[soal, nomor])
 	const goToHome = () => {
 		navigation.navigate('Home');
 	};
@@ -84,10 +92,55 @@ const index = ({route, navigation}) => {
 		navigation.navigate('Quiz');
 	};
 
-	const changeNomor = () => {
+	const submitJawaban = (jwb) => {
+		console.log(jwb + soal[nomor].kunci_jawaban);
+		if(jwb == soal[nomor].kunci_jawaban){
+			setIsTrue(true);
+			setJawaban([...jawaban, {id: soal[nomor].id, is_true: true }])
+		} else {
+			setIsTrue(false);
+			setJawaban([...jawaban, {id: soal[nomor].id, is_true: false }])
+		}
+		
 		bottomSheetRef.current.expand()
 		//setNomor(nomor+1);
 	}
+
+	const nextSoal = ()=>{
+		if((nomor+1) == totalSoal)
+		{
+			// var test = JSON.stringify({
+			// 			level: level,
+			// 			user_id: userid,
+			// 			type: status,
+			// 			list_jawaban: jawaban
+			// 		})
+			// console.log(test)
+			fetch('https://dea.himti.my.id/api/savejawaban', {
+				method: 'post',
+				headers: {
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify({
+					level: level,
+					user_id: userid,
+					type: status,
+					list_jawaban: jawaban
+				})
+			}).then(res => res.text()).then(teks => console.log(teks))
+			.catch(err => console.log(err))
+			navigation.reset({
+				index: 0,
+				routes: [{name: 'Start'}]
+			})
+
+
+			return;
+		}
+		setNomor(nomor+1);
+		bottomSheetRef.current.collapse()
+	}
+ 
 
 	return (
 		<SafeAreaView style={tailwind('h-full')}>
@@ -109,7 +162,7 @@ const index = ({route, navigation}) => {
 						style={tailwind(
 							'w-1/2 py-1 border border-white bg-yellow-300 rounded-xl ',
 						)}>
-						<Text style={tailwind('text-center')}>{'1 of 10'}</Text>
+						<Text style={tailwind('text-center')}>{(nomor+1) +' of ' + totalSoal}</Text>
 					</View>
 				</View>
 			</View>
@@ -140,16 +193,16 @@ const index = ({route, navigation}) => {
 			<View style={tailwind('flex-row flex-wrap flex-wrap w-full')}>
 				{Object.keys(listjawab).map((key)=> {
 					return(
-						<TouchableOpacity key={key} onPress={changeNomor} style={tailwind('w-1/2 px-5 mb-3')}>
+						<TouchableOpacity key={key} onPress={() => submitJawaban(key)} style={tailwind('w-1/2 px-5 mb-3')}>
 					<View
 						style={tailwind(
 							'w-full rounded mt-1 px-2 py-3 bg-white items-center',
 						)}>
 						<View
-							style={tailwind('w-5/6 rounded-xl mt-1 px-1 py-1 bg-yellow-600')}>
+							style={tailwind('w-full rounded-xl mt-1 px-1 py-1 bg-yellow-600')}>
 							<Text
 								style={tailwind('text-sm text-white font-bold text-center')}>
-									{listjawab[key]}
+									{key+'.'+listjawab[key]}
 							</Text>
 						</View>
 					</View>
@@ -159,7 +212,14 @@ const index = ({route, navigation}) => {
 
 				
 			</View>
-			<BottomSheetComponent bottomSheetRef={bottomSheetRef} handleSheetChanges={handleSheetChanges}/>
+			<BottomSheetComponent 
+			bottomSheetRef={bottomSheetRef} 
+			handleSheetChanges={handleSheetChanges}
+			width={width}
+			penjelasan={{html: soal[nomor].penjelasan?soal[nomor].penjelasan:'<p>loading</p>'}}
+			is_true={isTrue}
+			nextSoal={nextSoal}
+			/>
 		</SafeAreaView>
 	);
 };

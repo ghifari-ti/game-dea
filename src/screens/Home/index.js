@@ -29,10 +29,12 @@ const index = ({navigation}) => {
 			<View style={tailwind('h-full flex justify-center items-center')}>
 				<Image source={BackGroundLogin} />
 			</View>
+			
 			<View
 				style={tailwind(
 					'absolute w-full h-full flex justify-center items-center',
 				)}>
+					<Image source={require('../../assets/images/logo.png')} style={{height: 120, width: 130, marginBottom: 35}}/>
 				<View style={tailwind('w-2/3 mb-3')}>
 					<ButtonForm actionButton={goToStart} text={'START'} />
 				</View>

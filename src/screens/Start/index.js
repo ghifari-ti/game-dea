@@ -11,16 +11,59 @@ import {
 import tailwind from 'tailwind-rn';
 import {BackGroundLogin} from '../../assets';
 import {ButtonForm} from '../../components';
-import SoundPlayer from 'react-native-sound-player';
+// import SoundPlayer from 'react-native-sound-player';
 import { useState } from 'react';
 import { useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import Icon from 'react-native-vector-icons/MaterialIcons';
 
 // const soundIcon = <FontAwesome5 color={'#0A35DB'} size={20} name={'volume-up'} />;
 // const soundOffIcon = <FontAwesome5 color={'#0A35DB'} size={20} name={'volume-off'} />;
 
 const index = ({navigation}) => {
 	const [play, setPlay] = useState(true);
+	const [statusSoal, setStatusSoal] = useState({
+		level_1: 'first',
+		level_2: 'first',
+		level_3: 'first',
+	})
+	const [level, setLevel] = useState({
+		level_1: 'unlocked',
+		level_2: 'locked',
+		level_3: 'locked',
+	})
+
+	useEffect( async()=>{
+		var user_id = JSON.parse(await AsyncStorage.getItem('user_id'));
+		//LEVEL 1
+		var level1rem = await cekJawaban(1, user_id, "remedial");
+		if(level1rem.level == "remedial")
+		{
+			setStatusSoal({...statusSoal, level_1: 'remedial'})
+			//setLevel({...level, level_1: level1rem.level});
+		}
+		//LEVEL 2
+		if(level1rem.level == "locked" || level1rem.level == "remedial")
+		{
+			if(level1rem.level == "locked")
+			{
+				var level1fir = await cekJawaban(1, user_id, "first");
+				if(level1fir.level != 'remedial')
+				{
+					setLevel({...level, level_2: level1rem.level});
+				} else {
+					setStatusSoal({...statusSoal, level_1: level1fir.level}) 
+				}
+			}
+			
+		} else {
+			setLevel({...level, level_2: level1rem.level});
+		}
+		 
+		console.log(level)
+		console.log(statusSoal)
+		return; 
+	}, [])
 
 	useEffect( async()=>{
 		var test = await AsyncStorage.getItem('music')
@@ -33,14 +76,37 @@ const index = ({navigation}) => {
 		await AsyncStorage.setItem('music', JSON.stringify(play));
 	}, [play])
 
+	async function cekJawaban(level, user_id, type)
+	{
+		try {
+			var res = await fetch('https://dea.himti.my.id/api/cekjawaban',{
+			method: 'post',
+			headers: {
+				'Content-Type': 'application/json'
+			},
+			body: JSON.stringify({
+				level: level,
+				user_id: user_id,
+				type: type,
+			})
+		});
+		} catch (e)
+		{
+			console.log(e);
+		}
+
+		return await res.json();
+		
+	}
+
 	const pauseMusic = async () =>
 	{
-		if(!play)
-		{
-			SoundPlayer.resume();
-		} else {
-			SoundPlayer.pause();
-		}
+		// if(!play)
+		// {
+		// 	SoundPlayer.resume();
+		// } else {
+		// 	SoundPlayer.pause();
+		// }
 		setPlay(!play)
 	}
 
@@ -52,11 +118,12 @@ const index = ({navigation}) => {
 	
 	
 
-	const goToQuiz = (level) => {
+	const goToQuiz = (level, status) => {
 		navigation.navigate('Quiz', {
 			screen: 'Quiz',
 			params: {
-				level: level
+				level: level,
+				status: status
 			}
 		});
 	};
@@ -84,10 +151,10 @@ const index = ({navigation}) => {
 			</View>
 			<View style={tailwind('flex-row justify-center')}>
 				<View style={tailwind('w-1/2')}>
-					<TouchableOpacity onPress={() => goToQuiz(1)} style={tailwind('px-5 mb-3')}>
+					<TouchableOpacity onPress={() => goToQuiz(1, statusSoal.level_1)} style={tailwind('px-5 mb-3')}>
 						<View
 							style={tailwind(
-								'w-full rounded mt-1 px-2 py-6 bg-white items-center',
+								'w-full rounded mt-1 px-2 py-3 bg-white items-center',
 							)}>
 							<View
 								style={tailwind(
@@ -98,9 +165,13 @@ const index = ({navigation}) => {
                   Level 1
 								</Text>
 							</View>
+							{(statusSoal.level_1 == 'remedial')? <View style={tailwind('mt-1')}>
+								<Icon name="history" size={20}/>
+							</View>: null}
 						</View>
 					</TouchableOpacity>
-					<TouchableOpacity style={tailwind('px-5 mb-3')}>
+					
+					{(level.level_2 == 'unlocked')? <TouchableOpacity style={tailwind('px-5 mb-3')}>
 						<View
 							style={tailwind(
 								'w-full rounded mt-1 px-2 py-6 bg-white items-center',
@@ -115,8 +186,25 @@ const index = ({navigation}) => {
 								</Text>
 							</View>
 						</View>
-					</TouchableOpacity>
-					<TouchableOpacity style={tailwind('px-5 mb-3')}>
+					</TouchableOpacity> : <TouchableOpacity style={tailwind('px-5 mb-3')}>
+						<View
+							style={tailwind(
+								'w-full rounded mt-1 px-2 py-6 bg-gray-500 items-center',
+							)}>
+							<View
+								style={tailwind(
+									'w-3/4 rounded-xl mt-1 px-2 py-1 bg-yellow-600',
+								)}>
+								<Text
+									style={tailwind('text-sm text-white font-bold text-center')}>
+                  Level 2
+								</Text>
+							</View>
+						</View>
+					</TouchableOpacity> }
+
+
+					{(level.level_2 == 'unlocked')? <TouchableOpacity style={tailwind('px-5 mb-3')}>
 						<View
 							style={tailwind(
 								'w-full rounded mt-1 px-2 py-6 bg-white items-center',
@@ -131,7 +219,22 @@ const index = ({navigation}) => {
 								</Text>
 							</View>
 						</View>
-					</TouchableOpacity>
+					</TouchableOpacity> : <TouchableOpacity style={tailwind('px-5 mb-3')}>
+						<View
+							style={tailwind(
+								'w-full rounded mt-1 px-2 py-6 bg-gray-500 items-center',
+							)}>
+							<View
+								style={tailwind(
+									'w-3/4 rounded-xl mt-1 px-2 py-1 bg-yellow-600',
+								)}>
+								<Text
+									style={tailwind('text-sm text-white font-bold text-center')}>
+                  Level 3
+								</Text>
+							</View>
+						</View>
+					</TouchableOpacity> }
 				</View>
 			</View>
 		</SafeAreaView>
