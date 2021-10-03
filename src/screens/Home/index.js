@@ -7,9 +7,10 @@ import {
 	TouchableOpacity,
 	View,
 } from 'react-native';
-import {BackGroundLogin, Congrats} from '../../assets';
+import {BackgroundLogin, Congrats} from '../../assets';
 import tailwind from 'tailwind-rn';
 import {ButtonForm, InputForm} from '../../components';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 
 const index = ({navigation}) => {
@@ -24,10 +25,18 @@ const index = ({navigation}) => {
 	const goToStart = () => {
 		navigation.navigate('Start');
 	};
+
+	const goToExit = () => {
+		AsyncStorage.clear();
+		navigation.reset({
+			index: 0,
+			routes: [{name: 'Login'}]
+		})
+	}
 	return (
 		<SafeAreaView style={tailwind('h-full')}>
 			<View style={tailwind('h-full flex justify-center items-center')}>
-				<Image source={BackGroundLogin} />
+				<Image source={BackgroundLogin} />
 			</View>
 			
 			<View
@@ -54,6 +63,7 @@ const index = ({navigation}) => {
 				</View>
 				<View style={tailwind('w-2/3 mb-3')}>
 					<ButtonForm
+					actionButton={goToExit}
 						txtColor={'text-white'}
 						bgColor={'bg-red-600'}
 						text={'EXIT'}

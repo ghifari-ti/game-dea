@@ -9,7 +9,7 @@ import {
 } from 'react-native';
 // import FontAwesome5 from 'react-native-vector-icons/FontAwesome5';
 import tailwind from 'tailwind-rn';
-import {BackGroundLogin} from '../../assets';
+import {BackgroundLogin, BackGroundLogin} from '../../assets';
 import {ButtonForm} from '../../components';
 
 // const soundIcon = <FontAwesome5 color={'#0A35DB'} size={20} name={'volume-up'} />;
@@ -22,12 +22,14 @@ const index = ({navigation}) => {
 	return (
 		<SafeAreaView style={tailwind('h-full')}>
 			<View style={tailwind('absolute h-full w-full')}>
-				<Image source={BackGroundLogin} />
+				<Image source={BackgroundLogin} />
 			</View>
 			<View
 				style={tailwind('px-6 py-4 w-full flex-row bg-white justify-between')}>
-				<Text>Logo</Text>
-				<Text>Icon Sounds</Text>
+				<Image style={tailwind('h-12 w-12')} source={require('../../assets/images/logo.png')}/>
+				<TouchableOpacity onPress={()=> pauseMusic()}>
+					<Image style={tailwind('mt-3')} source={require('../../assets/images/sound_btn_blue.png')}/>
+				</TouchableOpacity>
 			</View>
 			<View style={tailwind('px-6 my-5  w-full flex-row justify-center')}>
 				<Text style={tailwind('text-3xl font-bold text-white')}>

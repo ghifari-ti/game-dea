@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import {
 	Image,
 	SafeAreaView,
@@ -9,13 +9,14 @@ import {
 } from 'react-native';
 // import FontAwesome5 from 'react-native-vector-icons/FontAwesome5';
 import tailwind from 'tailwind-rn';
-import {BackGroundLogin} from '../../assets';
+import {BackgroundLogin} from '../../assets';
 import {ButtonForm} from '../../components';
 // import SoundPlayer from 'react-native-sound-player';
 import { useState } from 'react';
 import { useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import { useFocusEffect } from '@react-navigation/core';
 
 // const soundIcon = <FontAwesome5 color={'#0A35DB'} size={20} name={'volume-up'} />;
 // const soundOffIcon = <FontAwesome5 color={'#0A35DB'} size={20} name={'volume-off'} />;
@@ -33,37 +34,76 @@ const index = ({navigation}) => {
 		level_3: 'locked',
 	})
 
-	useEffect( async()=>{
+	// useEffect( async()=>{
+	// 	await refreshStatus();
+	// 	return;
+	// }, [])
+
+	async function refreshStatus()
+	{
 		var user_id = JSON.parse(await AsyncStorage.getItem('user_id'));
-		//LEVEL 1
-		var level1rem = await cekJawaban(1, user_id, "remedial");
-		if(level1rem.level == "remedial")
-		{
-			setStatusSoal({...statusSoal, level_1: 'remedial'})
-			//setLevel({...level, level_1: level1rem.level});
-		}
-		//LEVEL 2
-		if(level1rem.level == "locked" || level1rem.level == "remedial")
-		{
-			if(level1rem.level == "locked")
+			//LEVEL 1
+			var level1rem = await cekJawaban(1, user_id, "remedial");
+			if(level1rem.level == "remedial")
 			{
-				var level1fir = await cekJawaban(1, user_id, "first");
-				if(level1fir.level != 'remedial')
-				{
-					setLevel({...level, level_2: level1rem.level});
-				} else {
-					setStatusSoal({...statusSoal, level_1: level1fir.level}) 
-				}
+				setStatusSoal({...statusSoal, level_1: 'remedial'})
 			}
+	
+			//LEVEL 2
+			let level2rem = await cekJawaban(2, user_id, "remedial");
+			if(level2rem.level == "remedial")
+			{
+				setStatusSoal({...statusSoal, level_2: 'remedial'})
+			}
+	
+			if(level1rem.level == "locked" || level1rem.level == "remedial")
+			{
+				if(level1rem.level == "locked")
+				{
+					var level1fir = await cekJawaban(1, user_id, "first");
+					if(level1fir.level != 'remedial')
+					{
+						setLevel({...level, level_2: level1fir.level});
+					} else {
+						setStatusSoal({...statusSoal, level_1: level1fir.level}) 
+					}
+				}
+				
+			} else {
+				setLevel({...level, level_2: level1rem.level});
+			}
+	
+			//level 3
+			let level3rem = await cekJawaban(3, user_id, "remedial");
+			if(level2rem.level == "locked" || level2rem.level == "remedial")
+			{
+				if(level2rem.level == "locked")
+				{
+					var level2fir = await cekJawaban(2, user_id, "first");
+					console.log(level2fir);
+					if(level2fir.level != 'remedial')
+					{
+						setLevel({...level, level_3: level2fir.level});
+					} else {
+						setStatusSoal({...statusSoal, level_2: level2fir.level}) 
+					}
+				}
+				
+			} else {
+				setLevel({...level, level_3: level2rem.level});
+			}
+	
 			
-		} else {
-			setLevel({...level, level_2: level1rem.level});
-		}
-		 
-		console.log(level)
-		console.log(statusSoal)
-		return; 
-	}, [])
+			 
+			console.log(level)
+			console.log(statusSoal)
+	}
+
+	useFocusEffect(
+		useCallback(()=>{
+			refreshStatus();
+		}, [])
+	)
 
 	useEffect( async()=>{
 		var test = await AsyncStorage.getItem('music')
@@ -130,7 +170,7 @@ const index = ({navigation}) => {
 	return (
 		<SafeAreaView style={tailwind('h-full')}>
 			<View style={tailwind('absolute h-full w-full')}>
-				<Image source={BackGroundLogin} />
+				<Image source={BackgroundLogin} />
 			</View>
 			<View style={tailwind('px-6 py-4 w-full flex-row justify-between')}>
 				<TouchableOpacity onPress={goToHome}>
@@ -171,10 +211,10 @@ const index = ({navigation}) => {
 						</View>
 					</TouchableOpacity>
 					
-					{(level.level_2 == 'unlocked')? <TouchableOpacity style={tailwind('px-5 mb-3')}>
+					{(level.level_2 == 'unlocked')? <TouchableOpacity onPress={() => goToQuiz(2, statusSoal.level_2)} style={tailwind('px-5 mb-3')}>
 						<View
 							style={tailwind(
-								'w-full rounded mt-1 px-2 py-6 bg-white items-center',
+								'w-full rounded mt-1 px-2 py-3 bg-white items-center',
 							)}>
 							<View
 								style={tailwind(
@@ -185,6 +225,9 @@ const index = ({navigation}) => {
                   Level 2
 								</Text>
 							</View>
+							{(statusSoal.level_2 == 'remedial')? <View style={tailwind('mt-1')}>
+								<Icon name="history" size={20}/>
+							</View>: null}
 						</View>
 					</TouchableOpacity> : <TouchableOpacity style={tailwind('px-5 mb-3')}>
 						<View
@@ -200,11 +243,14 @@ const index = ({navigation}) => {
                   Level 2
 								</Text>
 							</View>
+							{(statusSoal.level_2 == 'remedial')? <View style={tailwind('mt-1')}>
+								<Icon name="history" size={20}/>
+							</View>: null}
 						</View>
 					</TouchableOpacity> }
 
 
-					{(level.level_2 == 'unlocked')? <TouchableOpacity style={tailwind('px-5 mb-3')}>
+					{(level.level_3 == 'unlocked')? <TouchableOpacity style={tailwind('px-5 mb-3')}>
 						<View
 							style={tailwind(
 								'w-full rounded mt-1 px-2 py-6 bg-white items-center',

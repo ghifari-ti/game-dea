@@ -8,7 +8,7 @@ import {
 	TouchableOpacity,
 	View,
 } from 'react-native';
-import {BackGroundLogin, Congrats} from '../../assets';
+import {BackgroundLogin, BackGroundLogin, Congrats} from '../../assets';
 import tailwind from 'tailwind-rn';
 import {ButtonForm, InputForm} from '../../components';
 import { useState } from 'react';
@@ -58,7 +58,7 @@ const index = ({navigation}) => {
 	return (
 		<SafeAreaView style={tailwind('h-full')}>
 			<View style={tailwind('h-full flex justify-center items-center')}>
-				<Image source={BackGroundLogin} />
+				<Image source={BackgroundLogin} />
 			</View>
 			<View
 				style={tailwind(

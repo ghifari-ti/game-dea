@@ -14,7 +14,7 @@ import {
 } from 'react-native';
 // import FontAwesome5 from 'react-native-vector-icons/FontAwesome5';
 import tailwind from 'tailwind-rn';
-import {BackGroundLogin} from '../../assets';
+import {BackgroundLogin, BackGroundLogin} from '../../assets';
 import {ButtonForm} from '../../components';
 import queryString from 'query-string'
 import RenderHTML from 'react-native-render-html';
@@ -22,6 +22,7 @@ import BottomSheetComponent from './bottomsheet';
 import { useCallback } from 'react';
 import { useRef } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import CongratsSheetComponent from './congratsSheet';
 
 // const soundIcon = <FontAwesome5 color={'#0A35DB'} size={20} name={'volume-up'} />;
 // const soundOffIcon = <FontAwesome5 color={'#0A35DB'} size={20} name={'volume-off'} />;
@@ -45,8 +46,11 @@ const index = ({route, navigation}) => {
 	}]);
 	const [jawaban, setJawaban] = useState([])
 	const [totalSoal, setTotalSoal] = useState(0);
+	const [countBenar, setCountBenar] = useState(0);
 	const {width} = useWindowDimensions();
 	const bottomSheetRef = useRef(null);
+	const congratsSheetRef = useRef(null);
+
 	const handleSheetChanges = useCallback((index) => {
         console.log('handleSheetChanges', index);
     }, []);
@@ -85,7 +89,7 @@ const index = ({route, navigation}) => {
 		return;
 	},[soal, nomor])
 	const goToHome = () => {
-		navigation.navigate('Home');
+		navigation.goBack()
 	};
 
 	const goToQuiz = () => {
@@ -109,13 +113,22 @@ const index = ({route, navigation}) => {
 	const nextSoal = ()=>{
 		if((nomor+1) == totalSoal)
 		{
-			// var test = JSON.stringify({
-			// 			level: level,
-			// 			user_id: userid,
-			// 			type: status,
-			// 			list_jawaban: jawaban
-			// 		})
-			// console.log(test)
+			let localCountBenar = 0
+			for ( let index in jawaban)
+			{
+				if(jawaban[index].is_true)
+				{
+					localCountBenar++;
+				}
+			}
+			setCountBenar(localCountBenar);
+			var test = JSON.stringify({
+						level: level,
+						user_id: userid,
+						type: status,
+						list_jawaban: jawaban
+					})
+			console.log(test)
 			fetch('https://dea.himti.my.id/api/savejawaban', {
 				method: 'post',
 				headers: {
@@ -129,11 +142,12 @@ const index = ({route, navigation}) => {
 				})
 			}).then(res => res.text()).then(teks => console.log(teks))
 			.catch(err => console.log(err))
-			navigation.reset({
-				index: 0,
-				routes: [{name: 'Start'}]
-			})
-
+			// navigation.reset({
+			// 	index: 0,
+			// 	routes: [{name: 'Start'}]
+			// })
+			bottomSheetRef.current.collapse()
+			congratsSheetRef.current.expand()
 
 			return;
 		}
@@ -145,11 +159,11 @@ const index = ({route, navigation}) => {
 	return (
 		<SafeAreaView style={tailwind('h-full')}>
 			<View style={tailwind('absolute h-full w-full')}>
-				<Image source={BackGroundLogin} />
+				<Image source={BackgroundLogin} />
 			</View>
 			<View style={tailwind('px-6 py-4 w-full flex-row justify-between')}>
 				<TouchableOpacity onPress={goToHome}>
-					<Text style={tailwind('text-white')}>Back</Text>
+				<Image source={require('../../assets/images/back_button.png')} style={{width: 35, height: 35, resizeMode: 'cover'}}/>
 				</TouchableOpacity>
 				<Image style={tailwind('h-11 w-11')} source={require('../../assets/images/logo.png')} />
 				<TouchableOpacity>
@@ -179,7 +193,7 @@ const index = ({route, navigation}) => {
 								)}>
 								<Text
 									style={tailwind('text-sm text-white font-bold text-center')}>
-                  Level 1
+                  Level {level}
 								</Text>
 							</View>
 						</View>
@@ -212,6 +226,13 @@ const index = ({route, navigation}) => {
 
 				
 			</View>
+			<CongratsSheetComponent 
+			bottomSheetRef={congratsSheetRef}
+			width={width}
+			totalSoal={totalSoal}
+			countBenar={countBenar}
+			nextSoal={goToHome}
+			/>
 			<BottomSheetComponent 
 			bottomSheetRef={bottomSheetRef} 
 			handleSheetChanges={handleSheetChanges}
